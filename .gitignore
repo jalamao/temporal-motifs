@@ -1,3 +1,6 @@
 *.sublime*
 *.dot
 *.pyc
+.ipynb_checkpoints/
+*.ipynb
+*.png
