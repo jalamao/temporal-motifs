@@ -29,7 +29,7 @@ class Motif(object):
         self._target_color = False
         self._undirected = undirected
 
-        if isinstance(iterable, basestring):
+        if isinstance(iterable, str):
             iterable = string_to_iterable(iterable)
 
         iterable = self._clean_input(iterable)
@@ -209,15 +209,15 @@ def infer_event_type(event):
     if len(event)==3:
         return event_format
     elif len(event)==4:
-        if isinstance(event[3], basestring):
+        if isinstance(event[3], str):
             event_format.append('edge_color')
         else:
             event_format.append('duration')
         return event_format
     elif len(event)==5:
-        if isinstance(event[3], basestring) and isinstance(event[4], basestring): # Missing no dur/color and node colors.
+        if isinstance(event[3], str) and isinstance(event[4], str): # Missing no dur/color and node colors.
             event_format.extend(['source_color', 'target_color'])
-        elif isinstance(event[3], basestring):
+        elif isinstance(event[3], str):
             event_format.extend(['edge_color', 'duration'])
         else:
             event_format.extend(['duration', 'edge_color'])
