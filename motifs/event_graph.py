@@ -25,7 +25,7 @@ def are_connected(G, e1, e2, dt=999999):
 
 def build_event_graph(event_list):
     event_graph = nx.DiGraph()
-    for ix, event in enumerate(sample_data):
+    for ix, event in enumerate(event_list):
         event_graph.add_node(event, {'id':ix, event[0]:0, event[1]:0})
         for prev_event in event_graph.nodes():     
         # It would be better to iterates through a sliced dataframe "through edges which are less than dt old"

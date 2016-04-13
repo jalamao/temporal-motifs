@@ -7,9 +7,9 @@ def subfind(G, nmax, S_all, S, Vm, Vp):
         return None
     for node in Vp:
         Sx = S.union(set({node}))
-        Vmx = Vm.union(set({x for x in Vp if event_graph.node[x]['id'] < event_graph.node[node]['id']}))
-        Vpx = set({x for x in Vm if event_graph.node[x]['id'] > event_graph.node[node]['id']}).union(set({x for x in event_graph.neighbors(node) if x not in Vmx}))
-        subfind(event_graph, nmax, S_all, Sx, Vmx, Vpx)
+        Vmx = Vm.union(set({x for x in Vp if G.node[x]['id'] < G.node[node]['id']}))
+        Vpx = set({x for x in Vm if G.node[x]['id'] > G.node[node]['id']}).union(set({x for x in G.neighbors(node) if x not in Vmx}))
+        subfind(G, nmax, S_all, Sx, Vmx, Vpx)
     return None
     
 def find_motifs(event_graph, max_length): 
