@@ -1,7 +1,7 @@
 *.sublime*
 *.dot
 *.pyc
-.ipynb_checkpoints/
+*.ipynb_checkpoints/
 *.ipynb
 *.png
 motifs/outline.md
