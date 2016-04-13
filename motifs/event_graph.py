@@ -21,7 +21,7 @@ class EventGraph(nx.DiGraph):
         else:
             try:
                 self.event_list = pd.DataFrame(event_list)
-    	    except:
+            except:
                 raise Exception("Cannot convert data to dataframe.") #placeholder.
         return None 
 
