@@ -31,7 +31,7 @@ class EventGraph(nx.DiGraph):
         for ix, event in enumerate(self.event_list.itertuples(index=False)):
             self.add_node(event, defaultdict(int))
             self.node[event]['id'] = ix
-            for prev_event in event_filter(event, self.event_list):
+            for prev_event in event_filter(ix, event, self.event_list, dt=150):
                 if are_connected(prev_event, event) and self.are_neighbours(prev_event, event):
                     self.add_edge(prev_event, event, {'iet': event[2] - (prev_event[2]+prev_event[3])})
 
@@ -51,12 +51,12 @@ class EventGraph(nx.DiGraph):
         else:
             return False
                     
-def event_filter(event, df, dt=99999): # This needs to be generalised so that we can pass in any function, not just dt connectedness.
+def event_filter(ix, event, df, dt=99999): # This needs to be generalised so that we can pass in any function, not just dt connectedness.
     """
     Returns an iterable subset of the dataframe.
     """
-    time_diff = event[2] - df.time
-    return  df[(0 < time_diff) & (time_diff < dt)].itertuples(index=False)  
+    time_diff = event[2] - df.time[:ix] # We can make this so that we only look backwards!
+    return  df[:ix][time_diff < dt].itertuples(index=False)  
 
 def are_connected(e1, e2):
     """
@@ -64,6 +64,7 @@ def are_connected(e1, e2):
     """
     
     if e1 == e2: return False
+    #if len(set({e1[0], e2[0]}) & set({e2[0], e2[1]})) > 0:
     if (e1[0] in e2[:2] or e1[1] in e2[:2]):
         return True
     else:
