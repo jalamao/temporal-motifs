@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 import networkx as nx
+import pandas as pd
 
 # 1. Split motifs into fast and slow (ideally we want any arbitrary partition of the IETs).
 # Tail chosen as the last 50% of value/probability.
@@ -30,6 +31,25 @@ def partition_motifs(motifs, split):
 	for motif in motifs:
 		collect[motif.text + " ({})".format(splitter(motif))].append(motif)
 
+	return collect
+
+def partition_network(motifs):
+	""" Partitions motifs into events.
+
+	Note:
+		Extra to "partition_motifs" and will be combined later. 
+
+	Returns:
+		Temporal networks partitioned by motif.
+	"""
+	collect = defaultdict(list)
+
+	for motif in motifs:
+		collect[motif.text].extend(motif.original)
+	for key, item in collect.items():
+		df = pd.DataFrame.from_records(item)
+		df = df.sort_values(by=2).reset_index(drop=True)
+		collect[key] = df
 	return collect
 
 # 3. For each partition, add the edges of each event to the layer.
