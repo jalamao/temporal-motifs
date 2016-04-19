@@ -28,7 +28,7 @@ class EventGraph(nx.DiGraph):
     def build(self):
         """
         """
-        for ix, event in enumerate(self.event_list.itertuples(index=False)):
+        for ix, event in enumerate(self.event_list.itertuples(index=False, name='Event')):
             self.add_node(event, defaultdict(int))
             self.node[event]['id'] = ix
             for prev_event in event_filter(ix, event, self.event_list, dt=150):
