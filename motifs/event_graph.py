@@ -22,31 +22,40 @@ class EventGraph(nx.DiGraph):
             try:
                 self.event_list = pd.DataFrame(event_list)
             except:
-                raise Exception("Cannot convert data to dataframe.") #placeholder.
-        return None 
+                raise Exception("Cannot convert data to Pandas Dataframe.") #placeholder.
+        return None
 
     def build(self):
         """
         """
         for ix, event in enumerate(self.event_list.itertuples(index=False, name='Event')):
-            self.add_node(event, defaultdict(int))
+            self.add_node(event, defaultdict(bool))
             self.node[event]['id'] = ix
             for prev_event in event_filter(ix, event, self.event_list, dt=150):
                 if are_connected(prev_event, event) and self.are_neighbours(prev_event, event):
                     self.add_edge(prev_event, event, {'iet': event[2] - (prev_event[2]+prev_event[3])})
 
-                    # This ensures that each node in the event receives or sends one message max. 
+                    shared = set(prev_event[:2]) & set(event[:2])
+                    for node in shared:
+                        self.node[prev_event][node] = True
+                        #self.node[event][-node] = True
+                    # This ensures that each node in the event receives or sends one message max.
                     # This function should be rewritten to be more robust.
-                    self.node[prev_event][event[0]] += 2
-                    self.node[prev_event][event[1]] += 2
-                    self.node[event][prev_event[0]] -= 1
-                    self.node[event][prev_event[1]] -= 1 # Some of these will be redundant but I don't think will interfere.
+                    #
+                    # if set(prev_event[:2]) == set(event[:2]):
+                    #     self.node[prev_event][event[0]] += 4
+                    #     self.node[prev_event][event[1]] += 4
+                    # else:
+                    #     self.node[prev_event][event[0]] += 2
+                    #     self.node[prev_event][event[1]] += 2
+                    # self.node[event][prev_event[0]] -= 1
+                    # self.node[event][prev_event[1]] -= 1 # Some of these will be redundant but I don't think will interfere.
 
     def are_neighbours(self, e1, e2):
         """
         Checks whether the events are neighbours in the graph
         """
-        if (self.node[e1][e2[0]] <= 1) and (self.node[e1][e2[1]] <= 1): 
+        if not self.node[e1][e2[0]] and not self.node[e1][e2[1]]:
             return True
         else:
             return False
@@ -64,7 +73,6 @@ def are_connected(e1, e2):
     """
     
     if e1 == e2: return False
-    #if len(set({e1[0], e2[0]}) & set({e2[0], e2[1]})) > 0:
     if (e1[0] in e2[:2] or e1[1] in e2[:2]):
         return True
     else:

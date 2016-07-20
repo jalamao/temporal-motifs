@@ -24,11 +24,27 @@ def find_connected_sets(event_graph, max_length):
         subfind(event_graph, max_length, all_motifs, motifs, Vm, Vp)
     return all_motifs
 
-def find_motifs(event_graph, max_length):
+def find_motifs(event_list, event_graph, max_length):
     """ Returns all motifs in an EventGraph to a maximum length."""
     connected_sets = find_connected_sets(event_graph, max_length)
-    motifs = [Motif(x) for x in connected_sets if len(x)>1]
-    return motifs
+    valid_subgraphs = [Motif(x) for x in connected_sets if len(x)>1]
 
-def is_valid(motif):
+    if max_length > 2: # All length 2 motifs are automatically valid.
+        valid_subgraphs = [x for x in valid_subgraphs if is_valid(x, event_list, event_graph)]
+
+    return valid_subgraphs
+
+def is_valid(motif, event_list, event_graph):
     """ Checks if a motif is valid - events of each node must be consecutive. """
+    ids = [event_graph.node[x]['id'] for x in motif.original]
+
+    intermediate_events = event_list[ids[0]: ids[-1]+1]
+    filt = ~intermediate_events.index.isin(ids)
+    intermediate_events = intermediate_events[filt]
+    for ix, event in intermediate_events.iterrows():
+        before = set(event_list[ids[0]:ix][['source','target']].values.flatten())
+        after = set(event_list[ix+1:ids[-1]+1][['source','target']].values.flatten())
+        for node in (event.source, event.target):
+            if node in before and node in after:
+                return False
+    return True
