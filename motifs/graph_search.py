@@ -1,7 +1,24 @@
-# Tools to process an event graph to extract motifs and other data.
 from .motif import Motif
 
+"""
+# Tools to process an event graph to extract motifs and other data.
+"""
+
 def subfind(G, nmax, S_all, S, Vm, Vp):
+    """
+
+
+    Args:
+        G:
+        nmax:
+        S_all:
+        S:
+        Vm:
+        Vp:
+
+    Returns:
+
+    """
     global all_motifs
     all_motifs = all_motifs.union(frozenset({S}))
     if len(S) == nmax: # Other functions could go here
@@ -13,7 +30,16 @@ def subfind(G, nmax, S_all, S, Vm, Vp):
         subfind(G, nmax, S_all, Sx, Vmx, Vpx)
     return None
     
-def find_connected_sets(event_graph, max_length): 
+def find_connected_sets(event_graph, max_length):
+    """
+
+    Args:
+        event_graph:
+        max_length:
+
+    Returns:
+
+    """
     global all_motifs # This is bad, real bad
     all_motifs = set()
     # This loop is the easiest to parallelise.
@@ -25,7 +51,17 @@ def find_connected_sets(event_graph, max_length):
     return all_motifs
 
 def find_motifs(event_list, event_graph, max_length):
-    """ Returns all motifs in an EventGraph to a maximum length."""
+    """
+    Returns all motifs in an EventGraph to a maximum length.
+
+    Args:
+        event_list:
+        event_graph:
+        max_length:
+
+    Returns:
+
+    """
     connected_sets = find_connected_sets(event_graph, max_length)
     valid_subgraphs = [Motif(x) for x in connected_sets if len(x)>1]
 
@@ -35,7 +71,17 @@ def find_motifs(event_list, event_graph, max_length):
     return valid_subgraphs
 
 def is_valid(motif, event_list, event_graph):
-    """ Checks if a motif is valid - events of each node must be consecutive. """
+    """
+    Checks if a motif is valid - events of each node must be consecutive.
+
+    Args:
+        motif:
+        event_list:
+        event_graph:
+
+    Returns:
+
+    """
     ids = [event_graph.node[x]['id'] for x in motif.original]
 
     intermediate_events = event_list[ids[0]: ids[-1]+1]

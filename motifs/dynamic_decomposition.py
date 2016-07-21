@@ -6,12 +6,22 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 
+"""
+"""
 
 # 1. Split motifs into fast and slow (ideally we want any arbitrary partition of the IETs).
 # Tail chosen as the last 50% of value/probability.
 
 # We'll just look at ALL IETs for now
 def find_tail_value(motifs):
+    """
+
+    Args:
+        motifs:
+
+    Returns:
+
+    """
     iets = []
     for motif in motifs:
         iets.append(motif.interevent)
@@ -23,6 +33,15 @@ def find_tail_value(motifs):
 # 2. Collect all motifs of particular types (slow ABBA e.t.c).
 
 def partition_motifs(motifs, split):
+    """
+
+    Args:
+        motifs:
+        split:
+
+    Returns:
+
+    """
     collect = defaultdict(list)
 
     def spliter(motif):
@@ -43,6 +62,9 @@ def partition_network(motifs):
     Note:
         Extra to "partition_motifs" and will be combined later.
 
+    Args:
+        motifs
+
     Returns:
         Temporal networks partitioned by motif.
     """
@@ -60,6 +82,14 @@ def partition_network(motifs):
 # 3. For each partition, add the edges of each event to the layer.
 
 def build_networks(partition):
+    """
+
+    Args:
+        partition:
+
+    Returns:
+
+    """
     layers = {}
     for key, motifs in partition.items():
         G = nx.DiGraph(name=key)

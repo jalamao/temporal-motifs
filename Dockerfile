@@ -18,5 +18,5 @@ WORKDIR /motifs
 RUN pip install pygraphviz
 #RUN pip install -r ./environment.yml
 
-#ENTRYPOINT ["bash"]
-#CMD ["app.py"]
+ENTRYPOINT ["bash"]
+CMD ["while true; do ping 8.8.8.8; done"]

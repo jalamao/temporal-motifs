@@ -1,8 +1,11 @@
-# Tools to create an event graph from a temporal network.
 import networkx as nx
 import pandas as pd
 
 from collections import defaultdict
+
+"""
+Tools to create an event graph from a temporal network.
+"""
 
 class EventGraph(nx.DiGraph):
     """

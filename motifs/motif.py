@@ -1,6 +1,8 @@
-# Tools for handling a motif - creation, aggregation, plotting.
 from collections import namedtuple
 
+"""
+Tools for handling a motif - creation, aggregation, plotting.
+"""
 
 class Motif(object):
     """
