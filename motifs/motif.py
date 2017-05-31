@@ -1,5 +1,9 @@
-# Tools for handling a motif - creation, aggregation, plotting.
-from collections import namedtuple
+from collections import namedtuple, defaultdict
+import networkx as nx
+
+"""
+Tools for handling a motif - creation, aggregation, plotting.
+"""
 
 class Motif(object):
     """
@@ -12,14 +16,17 @@ class Motif(object):
 
     lettermap = dict(enumerate('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
     inv_lettermap = {val: key for key, val in lettermap.items()}
-    
-    def __init__(self, iterable, undirected=False):
+
+    def __init__(self, iterable, undirected=False, event_format=None):
         """
         Initialises the motif class.
 
         Args:
             iterable (iterable): Contains a series of events (source, target, time, ...)
             undirected (bool): States whether the motif is undirected (default:False)
+            event_format:
+            node_colour ():
+            edge_color ():
         """
 
         self._text = None
@@ -32,12 +39,10 @@ class Motif(object):
         if isinstance(iterable, str):
             iterable = string_to_iterable(iterable)
 
-        iterable = self._clean_input(iterable)
+        iterable = self._clean_input(iterable, event_format)
         self._extract_motif_information(iterable)
-        
 
-
-    def _clean_input(self, iterable):
+    def _clean_input(self, iterable, event_format=None):
         """
         Cleans input so that it is of the form (source, target, time, duration, type)
         
@@ -52,14 +57,15 @@ class Motif(object):
         """
 
         iterable = list(iterable)
-        event_format = infer_event_type(iterable[0])
+        if event_format is None:
+            event_format = infer_event_type(iterable[0])
         for attribute in event_format[3:]:
-            setattr(self, '_'+attribute, True)
+            setattr(self, '_' + attribute, True)
         Event = namedtuple('Event', event_format)
         iterable = [Event(*item) for item in iterable]
-        iterable.sort(key = lambda x: x.time, reverse=False) # Sort by timestamp
+        iterable.sort(key=lambda x: x.time, reverse=False)  # Sort by timestamp
         return iterable
-    
+
     def _extract_motif_information(self, iterable):
         """
         Extracts all information from the iterable to create the motif.
@@ -73,23 +79,16 @@ class Motif(object):
         Returns:
             None
         """
-        
+
         self.nodemap = {}
         self.eventmarkers = []
         self.motif = []
-        
-        if self._duration:
-            self.durations = [event.duration for event in iterable]
-        if self._edge_color:
-            self.edgecolors = [event.edge_color for event in iterable]
-        if self._source_color and self._target_color:
-            self.nodecolormap = {} # TBC
 
         ix = 0
         for event in iterable:
             self.eventmarkers.append(event.time)
-            if self._duration: # We might want to just default durations to 0
-                self.eventmarkers.append(event.time+event[3])
+            if self._duration:  # We might want to just default durations to 0
+                self.eventmarkers.append(event.time + event[3])
             if event.source not in self.nodemap.keys():
                 self.nodemap[event.source] = ix
                 ix += 1
@@ -98,11 +97,20 @@ class Motif(object):
                 ix += 1
             source = self.nodemap[event.source]
             target = self.nodemap[event.target]
-            self.motif.append((source,target))
+            self.motif.append((source, target))
 
-        self.interevent = [j-i for i, j in zip(self.eventmarkers[:-1], self.eventmarkers[1:])][1::2]
-        self.original = iterable # Might need a copy
-        
+        if self._duration:
+            self.durations = [event.duration for event in iterable]
+        if self._edge_color:
+            self.edgecolors = [event.edge_color for event in iterable]
+        if self._source_color and self._target_color:
+            self.nodecolors = [(event.source_color, event.target_color) for event in iterable]
+            self.nodecolormap = {self.nodemap[event.source]: event.source_color for event in iterable}
+            self.nodecolormap.update({self.nodemap[event.target]: event.target_color for event in iterable})
+
+        self.interevent = [j - i for i, j in zip(self.eventmarkers[:-1], self.eventmarkers[1:])][1::2]
+        self.original = iterable  # Might need a copy
+
     @property
     def text(self):
         """str: Returns the standardised text representation of the motif. """
@@ -133,16 +141,34 @@ class Motif(object):
         Returns:
             str: the standardised motif text representation.
         """
-        
-        if self._edge_color:
+
+        if self._edge_color and not self._source_color:
             s = []
             for edge, color in zip(self.motif, self.edgecolors):
                 add = self.lettermap[edge[0]] + self.lettermap[edge[1]]
                 if self._undirected:
                     add = ''.join(sorted(add))
-                add += color
+                add += str(color)
                 s.append(add)
-        else: 
+
+        elif self._source_color and not self._edge_color:
+            s = []
+            for edge, color in zip(self.motif, self.nodecolors):
+                add = self.lettermap[edge[0]] + str(color[0]) + self.lettermap[edge[1]] + str(color[1])
+                if self._undirected:
+                    add = ''.join(sorted(add))
+                s.append(add)
+
+        elif self._source_color and self._edge_color:
+            s = []
+            for edge, ec, nc in zip(self.motif, self.edgecolors, self.nodecolors):
+                add = self.lettermap[edge[0]] + str(nc[0]) + self.lettermap[edge[1]] + str(nc[1])
+                if self._undirected:
+                    add = ''.join(sorted(add))
+                add += str(ec)
+                s.append(add)
+
+        else:
             s = []
             for edge in self.motif:
                 add = self.lettermap[edge[0]] + self.lettermap[edge[1]]
@@ -151,44 +177,79 @@ class Motif(object):
                 s.append(add)
 
         return '-'.join(s)
-        
+
     def __repr__(self):
         """ Motif representation. """
         return "<Motif {}>".format(self.text)
-    
+
     def __str__(self):
         """ Motif string representation. """
         return self.text
-        
+
     def __hash__(self):
         """ Two motifs are equal if they have the same text representation. """
         return hash(self.__class__) ^ hash(self.text)
-    
+
     def __eq__(self, other):
         """ Two motifs are equal if they have the same text representation. """
         return isinstance(other, self.__class__) and self.text == other.text
-    
+
     def __getitem__(self, ix):
         """ Gets the corresponding values from the events which make up the motif. """
         return self.motif[ix]
-    
+
     def __len__(self):
         """ Returns the length of the motif (number of events). """
         return len(self.motif)
-    
+
     def __contains__(self, item):
         """ Checks whether a particular sequence is part of a motif using the string implementation. """
         if isinstance(item, str):
             return item.lower() in self.text.lower()
         else:
             raise NotImplementedError("Only strings can be used")
-            
+
     def to_networkx(self):
         """ 
         Converts the motif to a list of edges and dictionary of edge attributes (edge order, edge type)
         """
-        return self.motif, dict(zip(self.motif, range(1,len(self)+1)))
+        if self._undirected:
+            G = nx.Graph(name=self.text)
+        else:
+            G = nx.DiGraph(name=self.text)
 
+        if self._edge_color:
+            edge_attr = [{'t': t+1, 'color': col} for t, col in enumerate(self.edgecolors)]
+        else:
+            edge_attr = [{'t': t + 1} for t in range(len(self))]
+        edges = [(x, y, d) for (x, y), d in zip(self.motif, edge_attr)]
+        G.add_edges_from(edges)
+        if self._source_color:
+            nx.set_node_attributes(G, 'color', self.nodecolormap)
+        return G
+
+    def is_valid(self):
+        """
+        Determines whether a motif is valid (events are consecutive on each node)
+
+        Returns: True if valid, False otherwise.
+
+        """
+        ordering = defaultdict(int)
+        for event in self.original:
+            if ordering[event.source] == 0:
+                ordering[event.source] = event.s_order
+            elif ordering[event.source] == event.s_order - 1:
+                ordering[event.source] += 1
+            else:
+                return False
+            if ordering[event.target] == 0:
+                ordering[event.target] = event.t_order
+            elif ordering[event.target] == event.t_order - 1:
+                ordering[event.target] += 1
+            else:
+                return False
+        return True
 
 def infer_event_type(event):
     """
@@ -204,29 +265,25 @@ def infer_event_type(event):
     Returns:
         event_format (list): descriptions for each item in the tuple
     """
-    
-    event_format = ['source', 'target', 'time']
-    if len(event)==3:
+    # We might want to relax the string condition on edge and node colors and just convert them ourselves.
+    event_format = ['source', 'target', 'time', 'duration']#, 's_order', 't_order', 'dt_index']
+    if len(event) == 4:
         return event_format
-    elif len(event)==4:
-        if isinstance(event[3], str):
+    elif len(event) == 5:
+        if isinstance(event[4], str) or isinstance(event[4], int):
             event_format.append('edge_color')
-        else:
-            event_format.append('duration')
         return event_format
-    elif len(event)==5:
-        if isinstance(event[3], str) and isinstance(event[4], str): # Missing no dur/color and node colors.
+    elif len(event) == 6:
+        if isinstance(event[4], str) and isinstance(event[8], str):  # Missing no dur/color and node colors.
             event_format.extend(['source_color', 'target_color'])
-        elif isinstance(event[3], str):
-            event_format.extend(['edge_color', 'duration'])
-        else:
-            event_format.extend(['duration', 'edge_color'])
         return event_format
-    elif len(event)==7:
-        event_format.extend(['duration', 'edge_color', 'source_color', 'target_color']) # Misssing some subcases here.
+    elif len(event) == 7:
+        event_format.extend(['edge_color', 'source_color', 'target_color'])  # Misssing some subcases here.
         return event_format
     else:
-        raise InvalidEventTypeError("Events need to be of the form (source, target, time, duration, edge_color, source_color, target_color)")
+        raise InvalidEventTypeError(
+            "Events need to be of the form (source, target, time, duration, edge_color, source_color, target_color)")
+
 
 class InvalidEventTypeError(BaseException):
     """ Raised when an invalid event is passed into a motif. """
