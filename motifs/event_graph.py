@@ -28,11 +28,11 @@ class EventGraph(nx.DiGraph):
         return event_graph
 
     @classmethod
-    def from_eventlist(cls, event_list, dt, *args, **kwargs):
+    def from_eventlist(cls, event_list, *args, **kwargs):
         event_graph = cls(*args, **kwargs)
         #event_graph.node = defaultdict(lambda: defaultdict(int)) # This means we can find attributes of nodes which don't exist. 
         # Potential issue when counting the number of nodes we have but address that later.
-        event_graph.dt = dt
+        #event_graph.dt = dt
 
         if isinstance(event_list, pd.DataFrame):
             event_graph.event_list = event_list
