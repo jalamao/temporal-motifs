@@ -36,8 +36,6 @@ class Motif(object):
         self._target_color = False
         self._undirected = undirected
 
-        event_format = [word.replace('type', 'edge_color') for word in event_format] # Allowing the column 'type' to refer to edge colour.
-
         if isinstance(iterable, str):
             iterable = string_to_iterable(iterable)
 
@@ -46,7 +44,7 @@ class Motif(object):
 
     def _clean_input(self, iterable, event_format=None):
         """
-        Cleans input so that it is of the form (source, target, time, duration, type)
+        Cleans input so that it is of the form (source, target, time, duration, type).
         
         Note:
             1. iterable does not need to be ordered.
@@ -61,6 +59,8 @@ class Motif(object):
         iterable = list(iterable)
         if event_format is None:
             event_format = infer_event_type(iterable[0])
+        event_format = [word.replace('type', 'edge_color') for word in event_format] # Allowing the column 'type' to refer to edge colour.
+
         for attribute in event_format[3:]:
             setattr(self, '_' + attribute, True)
         Event = namedtuple('Event', event_format)
@@ -256,6 +256,7 @@ class Motif(object):
 def infer_event_type(event):
     """
     Infers the properties of a tuple in the context of events.
+    [Needs work]
 
     Note:
         Currently not robust.
@@ -269,11 +270,18 @@ def infer_event_type(event):
     """
     # We might want to relax the string condition on edge and node colors and just convert them ourselves.
     event_format = ['source', 'target', 'time', 'duration']#, 's_order', 't_order', 'dt_index']
-    if len(event) == 4:
+    if len(event) == 3:
+        return event_format[:3]
+    elif len(event) == 4 and isinstance(event[3], str):
+        event_format[3] = 'edge_color'
+        return event_format
+    elif len(event) == 4:
         return event_format
     elif len(event) == 5:
-        if isinstance(event[4], str) or isinstance(event[4], int):
+        if isinstance(event[4], str):
             event_format.append('edge_color')
+        else:
+            event_format.insert(3, 'edge_color')
         return event_format
     elif len(event) == 6:
         if isinstance(event[4], str) and isinstance(event[8], str):  # Missing no dur/color and node colors.
