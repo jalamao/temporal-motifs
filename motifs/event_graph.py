@@ -20,19 +20,18 @@ class EventGraph(nx.DiGraph):
 
     @classmethod
     def from_pickle(cls, filename):
+    	""" Load an event graph from a previously saved graph. """
+
         import pickle
         with open(filename, 'rb') as file:
             event_graph = pickle.load(file)
-        #Event = namedtuple('Event', event_graph._event_fields)
-        #event_graph = nx.relabel_nodes(event_graph, {node: Event(*node) for node in event_graph.nodes()})
         return event_graph
 
     @classmethod
     def from_eventlist(cls, event_list, *args, **kwargs):
+    	""" Load an event graph from a list of events. Need to call EventGraph.build() to build the graph. """
+
         event_graph = cls(*args, **kwargs)
-        #event_graph.node = defaultdict(lambda: defaultdict(int)) # This means we can find attributes of nodes which don't exist. 
-        # Potential issue when counting the number of nodes we have but address that later.
-        #event_graph.dt = dt
 
         if isinstance(event_list, pd.DataFrame):
             event_graph.event_list = event_list
@@ -58,8 +57,6 @@ class EventGraph(nx.DiGraph):
             event_graph.event_list.loc[:,'s_next'] = None # We'd like to keep this as an in column ideally for optimisation
             event_graph.event_list.loc[:,'t_next'] = None
 
-        #event_graph.event_list.source = event_graph.event_list.source.astype(int)
-        #event_graph.event_list.target = event_graph.event_list.target.astype(int)
         event_graph.event_list.index = event_graph.event_list.index.astype(int)
 
         # Calculate node event orderings for validity checks
@@ -72,24 +69,17 @@ class EventGraph(nx.DiGraph):
         event_graph.event_list.loc[:,'s_order'] = extra[:, 0]
         event_graph.event_list.loc[:,'t_order'] = extra[:, 1]
 
-        #lbs = np.zeros(shape=(len(event_graph.event_list), 1), dtype=int)
-        #for ix, entry in enumerate(event_graph.event_list.time - event_graph.dt):
-        #    lbs[ix] = bisect_left(event_graph.event_list.time, entry)
-        #event_graph.event_list['lower_index'] = lbs
-
-        # Partition the data into bins corresponding to dt, then we need only to slice the data rather than compare times.
-        #groups = pd.cut(event_graph.event_list.time, bins=np.arange(0, event_graph.event_list.time.max()+dt, dt))
-        #event_graph.partition = [0] + list(event_graph.event_list[groups != groups.shift(1)].index)
         return event_graph
 
     @classmethod
     def from_filter(cls, teg, dt, inc_nodes=True, *args, **kwargs):
+    	""" Create an event graph by filtering the edges from another event graph. """
+
         event_graph = cls(*args, **kwargs)
         edges = [edge for edge in teg.edges(data=True) if edge[2]['iet'] <= dt]
         event_graph.add_edges_from(edges)
-        #for edge, iet in [(edge,iet) for edge, iet in nx.get_edge_attributes(teg, 'iet').items() if iet < dt]:
-        #    event_graph.add_edge(*edge, attr_dict={'iet': iet})
-        try:  # nx.connected_component_subgraphs doesn't copy all the information. Assume if we're using it then we don't need event list.
+
+        try: 
             event_graph.event_list = teg.event_list.ix[event_graph.nodes()]
         except:
             pass
@@ -113,16 +103,16 @@ class EventGraph(nx.DiGraph):
 
     def build(self, verbose=False):
         """
+        Build the EventGraph from an event list (adds inter-event times but not motifs to edges).
 
         Args:
-            verbose (bool) -
+            verbose (bool) - Print out progress
 
         Returns:
 
         """
 
         node_pointer = defaultdict(lambda: None) # Points to the index of the last event for that node
-        #position = ['s_next', 't_next']
         position = [list(self.event_list.columns).index('s_next'), list(self.event_list.columns).index('t_next')]
         num_events = len(self.event_list)
 
@@ -169,36 +159,6 @@ class EventGraph(nx.DiGraph):
         self.add_nodes_from(self.event_list.index)
         self.add_weighted_edges_from(edges, weight='iet')
 
-        # OLD
-        # num_events = len(self.event_list)
-        # for ix, event in enumerate(self.event_list.itertuples(index=False, name='Event')):
-
-        #     if ix % 50 == 0 and verbose: # This should be moved outside so we don't have to keep checking this.
-        #         sys.stdout.write('\r {}/{}'.format(ix, num_events))
-        #         sys.stdout.flush()
-
-        #     self.add_node(event, defaultdict(bool))
-        #     self.node[event]['id'] = ix
-        #     self.node[event]['count'] = 0
-        #     for prev_event in self.event_filter(ix, event, self.event_list, dt=self.dt):
-
-        #         if self.node[prev_event]['count'] >= 2: continue  # If the node already has 2 edges, skip it .
-
-        #         shared = list(set(prev_event[:2]) & set(event[:2]))
-        #         if (are_connected(prev_event, event) and self.are_neighbours(prev_event, event)) or len(shared) == 2:
-
-        #             if len(shared) == 2 and self.node[prev_event][shared[0]] != self.node[prev_event][shared[1]]:
-        #                 # print ("Repeated nodes ABBA or ABAB")
-        #                 self.node[prev_event][shared[0]] = True
-        #                 self.node[prev_event][shared[1]] = True
-        #                 self.node[prev_event]['count'] += 1
-        #                 self.add_edge(prev_event, event, {'iet': event[2] - (prev_event[2] + prev_event[3])})
-
-        #             self.add_edge(prev_event, event, {'iet': event[2] - (prev_event[2]+prev_event[3])})  #we probably should just add ints as nodes
-        #             for node in shared:
-        #                 self.node[prev_event][node] = True
-        #                 self.node[prev_event]['count'] += 1
-
     def are_neighbours(self, e1, e2):
         """
         Checks whether the events are neighbours in the graph
@@ -214,27 +174,6 @@ class EventGraph(nx.DiGraph):
             return True
         else:
             return False
-
-    def event_filter(self, ix, event, df, dt=99999): # This needs to be generalised so that we can pass in any function, not just dt connectedness.
-        """
-        Returns an iterable subset of the dataframe.
-
-        Args:
-            ix:
-            event:
-            df:
-            dt:
-
-        Returns:
-
-        """
-        # try:
-        #     lower_bound = self.partition[max(0, bisect_left(self.partition, ix)-2)]
-        # except IndexError as e:
-        #     lower_bound = 0
-        lower_bound = event[-1] # lower_bound in event_list
-        time_diff = event[2] - df.time[lower_bound:ix]  # We can make this so that we only look backwards!
-        return df[lower_bound:ix][time_diff < dt].itertuples(index=False, name='Event')
 
     @property
     def maximal_subgraphs(self):
@@ -269,6 +208,7 @@ class EventGraph(nx.DiGraph):
 
         Returns: None
         """
+
         if columns is None:
             columns = self.event_list.columns[:-4] #This does not work, ['source', 'target', 'time']
 
@@ -303,11 +243,12 @@ class EventGraph(nx.DiGraph):
 
         return None
 
-    def to_edgelist(self, time_indexed=False, durations=False):
+    def to_event_list(self, time_indexed=False, durations=False):
         """
         Converts the event graph into an edgelist.
         Node enumeration starts at 0.
         Starting time of all components is 0 unless times are given.
+        [Currently a useless function as we are already building event graphs from event lists]
 
         Args:
             time_indexed (bool):
@@ -363,13 +304,14 @@ class EventGraph(nx.DiGraph):
 
     @property
     def motif_distribution(self):
-        return self.get_motif_distribution(valid_only=True)
+        return self.get_motif_distribution(valid_only=True, aggregate=True)
 
     def get_motif_distribution(self, valid_only=True, aggregate=False):
         """
         Returns the distribution of motifs in the TEG.
         Valid_only picks only motifs which are valid (by definition of Kovanen et al.)
         """
+
         if valid_only:
             edges = {edge: val for edge, val in nx.get_edge_attributes(self, 'type').items() if not val.endswith('i')}.keys()
             motifs = [self[u][v]['type'] for (u,v) in edges]
@@ -389,6 +331,7 @@ class EventGraph(nx.DiGraph):
         Returns the distribution of IETs in the TEG.
         Valid_only picks only IETs which are part of valid motifs (by definition of Kovanen et al.)
         """
+
         if valid_only and not by_motif:
             edges = {edge: val for edge, val in nx.get_edge_attributes(self, 'type').items() if not val.endswith('i')}.keys()
             iets = [self[u][v]['iet'] for (u,v) in edges]
@@ -405,7 +348,6 @@ class EventGraph(nx.DiGraph):
         Creates a list-of-list tree representation showing the recursive temporal decomposition of the network.
         
         Args:
-            teg:
             dts:
         """
 
@@ -436,7 +378,7 @@ class EventGraph(nx.DiGraph):
         Args:
             filename:
         """
-        #new_event_graph = nx.relabel_nodes(self, {x: x for x in self.nodes()}) # Removes the lambda from the nodes
+
         self._event_fields = self.event_list.columns[:-4]
         import pickle
         with open(filename, 'wb') as file:
@@ -464,6 +406,7 @@ def are_connected(e1, e2):
 
 def flatten(l):
     """ Flattens a nested list structure. """
+
     from collections import Iterable
     for el in l:
         if isinstance(el, Iterable) and not isinstance(el, (int)):
@@ -474,6 +417,7 @@ def flatten(l):
 
 def plot_full_barcode_efficiently(teg, dt, top, ax):
     """ Prints a barcode. """
+
     import matplotlib
     
     filtered = teg.filter_edges(dt)
@@ -497,6 +441,7 @@ def tweets_to_edgelist(df):
     Converts a set of tweets into a set of events between users. 
     Takes only the first mention in each tweet.
     """
+    
     event_list = []
     ix = 0
     df = df.sort_index()
