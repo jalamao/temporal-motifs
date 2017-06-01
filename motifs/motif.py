@@ -284,7 +284,7 @@ def infer_event_type(event):
             event_format.insert(3, 'edge_color')
         return event_format
     elif len(event) == 6:
-        if isinstance(event[4], str) and isinstance(event[8], str):  # Missing no dur/color and node colors.
+        if isinstance(event[4], str) and isinstance(event[5], str):  # Missing no dur/color and node colors.
             event_format.extend(['source_color', 'target_color'])
         return event_format
     elif len(event) == 7:
@@ -324,8 +324,6 @@ def string_to_iterable(string):
         iterable = [(inv_lettermap[s[0]], inv_lettermap[s[1]], t, s[2]) for t, s in enumerate(events)]
 
     elif len(events[0]) == 4:
-        # Node colors
-        pass
+        iterable = [(inv_lettermap[s[0]], inv_lettermap[s[2]], t, 0, str(s[1]), str(s[3])) for t, s in enumerate(events)]
 
-    # Need to add node colours
     return iterable
