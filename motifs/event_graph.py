@@ -85,8 +85,6 @@ class EventGraph(nx.DiGraph):
     @classmethod
     def from_filter(cls, teg, dt, inc_nodes=True, *args, **kwargs):
         event_graph = cls(*args, **kwargs)
-        if inc_nodes:
-            event_graph.add_nodes_from(teg.nodes(data=True))
         edges = [edge for edge in teg.edges(data=True) if edge[2]['iet'] <= dt]
         event_graph.add_edges_from(edges)
         #for edge, iet in [(edge,iet) for edge, iet in nx.get_edge_attributes(teg, 'iet').items() if iet < dt]:
@@ -95,6 +93,10 @@ class EventGraph(nx.DiGraph):
             event_graph.event_list = teg.event_list.ix[event_graph.nodes()]
         except:
             pass
+
+        if inc_nodes:
+            event_graph.add_nodes_from(teg.nodes(data=True))
+
         return event_graph
 
     def __init__(self, *args, **kwargs):
@@ -242,7 +244,7 @@ class EventGraph(nx.DiGraph):
         Returns:
             list
         """
-        return sorted(nx.weakly_connected_components(self), key=len, reverse=True)
+        return sorted(nx.weakly_connected_component_subgraphs(self), key=len, reverse=True)
 
     def filter_edges(self, dt):
         """
@@ -398,6 +400,35 @@ class EventGraph(nx.DiGraph):
             iets = list(nx.get_edge_attributes(self, 'iet').values())
         return iets
 
+    def build_tree(self, dts):
+        """
+        Creates a list-of-list tree representation showing the recursive temporal decomposition of the network.
+        
+        Args:
+            teg:
+            dts:
+        """
+
+        def component_tree(teg, dts):
+            """ Recursive function to build tree. """
+            dts = sorted(dts, reverse=True)
+            
+            components = nx.weakly_connected_component_subgraphs(teg.filter_edges(dt=dts[0]))
+            branch = []
+            for component in components:
+
+                if len(component) == 1:
+                    branch.append(component.nodes()[0])
+                elif len(dts) == 1:
+                    branch.append(component.nodes())
+                else:
+                    branch.append(component_tree(component, dts[1:]))
+            return branch
+
+        tree = component_tree(self, dts)
+        self.tree = tree
+        return tree
+
     def save(self, filename):
         """
         Saves the event_graph as a pickle.
@@ -429,6 +460,16 @@ def are_connected(e1, e2):
         return True
     else:
         return False
+
+
+def flatten(l):
+    """ Flattens a nested list structure. """
+    from collections import Iterable
+    for el in l:
+        if isinstance(el, Iterable) and not isinstance(el, (int)):
+            yield from flatten(el)
+        else:
+            yield el
 
 
 def plot_full_barcode_efficiently(teg, dt, top, ax):
