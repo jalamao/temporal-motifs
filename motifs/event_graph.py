@@ -1,6 +1,6 @@
 import sys
 from bisect import bisect_left
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 from itertools import count
 
 import networkx as nx
@@ -363,7 +363,7 @@ class EventGraph(nx.DiGraph):
     def motif_distribution(self):
         return self.get_motif_distribution(valid_only=True)
 
-    def get_motif_distribution(self, valid_only=True):
+    def get_motif_distribution(self, valid_only=True, aggregate=False):
         """
         Returns the distribution of motifs in the TEG.
         Valid_only picks only motifs which are valid (by definition of Kovanen et al.)
@@ -373,6 +373,9 @@ class EventGraph(nx.DiGraph):
             motifs = [self[u][v]['type'] for (u,v) in edges]
         else:
             motifs = list(nx.get_edge_attributes(self, 'type').values())
+
+        if aggregate: motifs = Counter(motifs)
+
         return motifs
 
     @property
