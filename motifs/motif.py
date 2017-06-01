@@ -36,6 +36,8 @@ class Motif(object):
         self._target_color = False
         self._undirected = undirected
 
+        event_format = [word.replace('type', 'edge_color') for word in event_format] # Allowing the column 'type' to refer to edge colour.
+
         if isinstance(iterable, str):
             iterable = string_to_iterable(iterable)
 
