@@ -86,7 +86,25 @@ def plot_full_barcode_efficiently(teg, dt, top, ax):
     bc = ax.add_collection(ln_coll)
     ax.set_ylim((0, top+1))
     ax.set_xlim((tmin,tmax))   
-    return bc
+    return ax
+
+def plot_fancy_barcode(teg, dt, top, ax=None):
+
+    if ax is None:
+        ax = plt.gca()
+    bc = plot_full_barcode_efficiently(teg, dt, top, ax)
+    ax.set_ylim((0,top))
+    ax.set_yticks(np.arange(0,top), minor=False)
+    ax.set_yticklabels(['C{}'.format(x) for x in np.arange(1,top+1)])
+    #
+    for tick in ax.yaxis.get_majorticklabels():
+        tick.set_verticalalignment("bottom")
+    
+    ax.grid(b=True, which='major', color='k', linestyle='-', alpha=0.5)
+    ax.xaxis.grid(False)
+    
+    ax.tick_params(axis='x', length=5, which='major', bottom=True, top=False)
+    return ax
 
 def draw_motif(motif, ax=None, edge_color_map=None, node_color_map=None):
     """
