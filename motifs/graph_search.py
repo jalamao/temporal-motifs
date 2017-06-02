@@ -62,7 +62,7 @@ def find_connected_sets(event_graph, max_length, verbose=False):
         subfind(event_graph, max_length, all_motifs, motifs, Vm, Vp)
     return all_motifs
 
-def find_motifs(event_graph, max_length, columns=['source', 'target', 'time'], verbose=False):
+def find_motifs(event_graph, dt, max_length, columns=['source', 'target', 'time'], verbose=False):
     """
     Returns all motifs in an EventGraph to a maximum length.
 
@@ -78,6 +78,8 @@ def find_motifs(event_graph, max_length, columns=['source', 'target', 'time'], v
         columns.append('s_order')
     if 't_order' not in columns:
         columns.append('t_order')
+
+    event_graph = event_graph.filter_edges(dt=dt)
 
     connected_sets = find_connected_sets(event_graph, max_length, verbose)
     valid_subgraphs = [Motif(event_graph.event_list.loc[x, columns].values, event_format=columns) for x in connected_sets if len(x)>1]

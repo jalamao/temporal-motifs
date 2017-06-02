@@ -28,11 +28,11 @@ class TestMotifFinder(BaseTestCase):
     
     def test_finder_function(self):
         """ Ensure function runs. """
-        motifs = find_motifs(self.event_graph, 3, columns=['source','target','time'])
+        motifs = find_motifs(self.event_graph, 100, 3, columns=['source','target','time'])
         
     def test_coloured_finder_function(self):
         """ Ensure function runs with event types. """
-        motifs = find_motifs(self.event_graph, 3, columns=['source','target','time', 'type'])
+        motifs = find_motifs(self.event_graph, 100, 3, columns=['source','target','time', 'type'])
 
 if __name__ == "__main__":
     unittest.main()
