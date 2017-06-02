@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from .motif import Motif
+from .auxiliary import *
 
 """
 Tools to create an event graph from a temporal network.
@@ -346,15 +347,16 @@ class EventGraph(nx.DiGraph):
 	def build_tree(self, dts):
 		"""
 		Creates a list-of-list tree representation showing the recursive temporal decomposition of the network.
-		
-		Args:
-			dts:
-		"""
 
+		Args:
+			teg:
+			dts:
+		"""  
+		  
+		dts = sorted(dts, reverse=True)
+		dts.insert(0, 1e99)
+		
 		def component_tree(teg, dts):
-			""" Recursive function to build tree. """
-			dts = sorted(dts, reverse=True)
-			
 			components = nx.weakly_connected_component_subgraphs(teg.filter_edges(dt=dts[0]))
 			branch = []
 			for component in components:
@@ -362,12 +364,12 @@ class EventGraph(nx.DiGraph):
 				if len(component) == 1:
 					branch.append(component.nodes()[0])
 				elif len(dts) == 1:
-					branch.append(component.nodes())
+					branch.append(tuple(component.nodes()))
 				else:
-					branch.append(component_tree(component, dts[1:]))
+					branch.append(tuple(component_tree(component, dts[1:])))
 			return branch
-
-		tree = component_tree(self, dts)
+		
+		tree = tuple(component_tree(self, dts))
 		self.tree = tree
 		return tree
 
@@ -383,89 +385,4 @@ class EventGraph(nx.DiGraph):
 		import pickle
 		with open(filename, 'wb') as file:
 			pickle.dump(self, file, -1)
-
-
-def are_connected(e1, e2):
-	"""
-	Checks whether two events are connected.
-
-	Args:
-		e1:
-		e2:
-
-	Returns:
-
-	"""
-	
-	if e1 == e2: return False
-	if (e1[0] in e2[:2] or e1[1] in e2[:2]):
-		return True
-	else:
-		return False
-
-
-def flatten_list(l):
-	""" Flattens a nested list structure. """
-
-	from collections import Iterable
-	for el in l:
-		if isinstance(el, Iterable) and not isinstance(el, (int)):
-			yield from flatten_list(el)
-		else:
-			yield el
-
-
-def plot_full_barcode_efficiently(teg, dt, top, ax):
-	""" Prints a barcode. """
-
-	import matplotlib
-	
-	filtered = teg.filter_edges(dt)
-	segs = []
-	tmin, tmax = 1e99, 0
-	for ix,component in enumerate(sorted(nx.weakly_connected_components(filtered), key=len, reverse=True)[:top]):
-		component = [teg.event_list.ix[i] for i in component]
-		for event in component:
-			segs.append(((event.time, ix),(event.time, ix+1)))
-			tmax = max(tmax, event.time)
-			tmin = min(tmin, event.time)
-			
-	ln_coll = matplotlib.collections.LineCollection(segs, linewidths=1, colors='k')
-	bc = ax.add_collection(ln_coll)
-	ax.set_ylim((0, top+1))
-	ax.set_xlim((tmin,tmax))   
-	return bc
-
-def tweets_to_edgelist(df):
-	""" 
-	Converts a set of tweets into a set of events between users. 
-	Takes only the first mention in each tweet.
-	"""
-
-	event_list = []
-	ix = 0
-	df = df.sort_index()
-	for _, row in df.iterrows():
-		
-		source = row['user_name']
-		tweet_id = row['id_str']
-		
-		if len(row['entities']['user_mentions']) > 0:
-			target = row['entities']['user_mentions'][0]['screen_name']
-		else:
-			continue
-
-		time = int(row['created_at'].value/int(1e9))
-		
-		if row['in_reply_to_status_id_str'] is not None:
-			style = 'reply'
-		elif row['retweeted_status_id_str'] is not None:
-			style = 'retweet'
-			source, target = target, source
-		else:
-			style = 'message'
-			
-		event_list.append((source, target, time, style, tweet_id))
-
-	event_list = pd.DataFrame(event_list, columns=['source','target','time','edge_color', 'tweet_id'])    
-	return event_list
+		return None
