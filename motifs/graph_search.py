@@ -27,9 +27,9 @@ def subfind(G, nmax, S_all, S, Vm, Vp):
         all_motifs = all_motifs.union(frozenset({Sx}))
         if len(Sx) == nmax:  # Other functions could go here
             continue
-        Vmx = Vm.union(set({x for x in Vp if G.node[x]['id'] < G.node[node]['id']}))
+        Vmx = Vm.union(set({x for x in Vp if x < node}))
         #Vmx = None
-        Vpx = set({x for x in Vm if G.node[x]['id'] > G.node[node]['id']}).union(set({x for x in G.neighbors(node) if x not in Vmx}))
+        Vpx = set({x for x in Vm if x > node}).union(set({x for x in G.neighbors(node) if x not in Vmx}))
         subfind(G, nmax, S_all, Sx, Vmx, Vpx)
     return None
     
@@ -56,13 +56,13 @@ def find_connected_sets(event_graph, max_length, verbose=False):
             sys.stdout.flush()
 
         motifs = frozenset({node})
-        Vm = set({n for n in event_graph if event_graph.node[n]['id'] < event_graph.node[node]['id']})
+        Vm = set({n for n in event_graph if n < node})
         #Vm = None
-        Vp = set({n for n in event_graph if n in event_graph.neighbors(node) and event_graph.node[n]['id'] > event_graph.node[node]['id']})
+        Vp = set({n for n in event_graph if n in event_graph.neighbors(node) and n > node})
         subfind(event_graph, max_length, all_motifs, motifs, Vm, Vp)
     return all_motifs
 
-def find_motifs(event_graph, max_length, verbose=False):
+def find_motifs(event_graph, max_length, columns=['source', 'target', 'time'], verbose=False):
     """
     Returns all motifs in an EventGraph to a maximum length.
 
@@ -74,8 +74,13 @@ def find_motifs(event_graph, max_length, verbose=False):
     Returns:
 
     """
+    if 's_order' not in columns:
+        columns.append('s_order')
+    if 't_order' not in columns:
+        columns.append('t_order')
+
     connected_sets = find_connected_sets(event_graph, max_length, verbose)
-    valid_subgraphs = [Motif(x) for x in connected_sets if len(x)>1]
+    valid_subgraphs = [Motif(event_graph.event_list.loc[x, columns].values, event_format=columns) for x in connected_sets if len(x)>1]
     valid_subgraphs = [x for x in valid_subgraphs if x.is_valid()]
 
     return valid_subgraphs
@@ -92,7 +97,7 @@ def is_valid(motif, event_list, event_graph):
     Returns:
 
     """
-    ids = sorted([event_graph.node[x]['id'] for x in motif.original])
+    ids = sorted([x for x in motif.original])
 
     intermediate_events = event_list[ids[0]: ids[-1]+1]
     filt = ~intermediate_events.index.isin(ids)
