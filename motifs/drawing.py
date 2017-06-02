@@ -4,6 +4,8 @@ import numpy as np
 
 from .auxiliary import *
 
+from collections import Iterable
+
 """
 These functions are copied over from legacy code so are not pretty, but do the job for now.
 """
@@ -21,7 +23,7 @@ def draw_tree(tree, dts, min_size=None, *args, **kwargs):
     def populate_nx_tree(G, tree):
         for element in tree:
             if isinstance(element, Iterable) and not isinstance(element, (int)):
-                G.add_node(element, attr_dict={'size':len(list(flatten(element)))})
+                G.add_node(element, attr_dict={'size':len(list(flatten_list(element)))})
                 for minor_element in element:
                     G.add_edge(element, minor_element)
                 populate_nx_tree(G, element)
