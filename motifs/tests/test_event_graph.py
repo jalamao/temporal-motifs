@@ -6,7 +6,7 @@ import networkx as nx
 import unittest
 from unittest import TestCase
 
-from motifs import EventGraph, flatten
+from motifs import EventGraph, flatten_list
 
 class BaseTestCase(TestCase):
         
@@ -71,7 +71,7 @@ class TestDecomposition(BaseTestCase):
         event_graph.build()
         tree = event_graph.build_tree(dts=[80,60,40,20,0])
         
-        flat_tree = list(flatten(tree))
+        flat_tree = list(flatten_list(tree))
         self.assertEqual(len(flat_tree), 100)
     
 class TestMotifs(BaseTestCase):
