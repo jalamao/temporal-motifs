@@ -1,3 +1,5 @@
+
+import unittest
 from unittest import TestCase, skip
 from collections import Counter
 
@@ -36,11 +38,12 @@ class TestMotifManipulation(TestCase):
 	def test_string_equivalence(self):
 		self.assertEqual(str(Motif('AB-BA')), 'AB-BA')
 		self.assertEqual(str(Motif('ABr-BAr')), 'ABr-BAr')
-		#self.assertEqual(Motif('A1B2-B2A1'), 'A1B2-B2A1')
+		self.assertEqual(str(Motif('A1B2-B2A1')), 'A1B2-B2A1')
 
 
 class TestEventInference(TestCase):
-
+	""" Test whether the type of event is inferred correctly. """
+	
 	def test_plain_event(self):
 		event = (0, 1, 2)
 		self.assertListEqual(infer_event_type(event), ['source', 'target', 'time'])
@@ -59,9 +62,13 @@ class TestEventInference(TestCase):
 		event = (0, 1, 2, 5, 'r')
 		self.assertListEqual(infer_event_type(event), ['source', 'target', 'time', 'duration', 'edge_color'])
 
-	@skip("Skipping until working as expected!")
 	def test_invalid_event(self):
-		event = (0, 1)
-		self.assertRaises(InvalidEventTypeError, infer_event_type(event))
-		event = (1, 1, 1, 1, 1, 1, 1, 1, 1)
-		self.assertRaises(InvalidEventTypeError, infer_event_type(event))
+		with self.assertRaises(InvalidEventTypeError):
+			event = (0, 1)
+			infer_event_type(event)
+		with self.assertRaises(InvalidEventTypeError):
+			event = (1, 1, 1, 1, 1, 1, 1, 1, 1)
+			infer_event_type(event)
+
+if __name__ == "__main__":
+	unittest.main()        
