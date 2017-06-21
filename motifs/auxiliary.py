@@ -47,10 +47,10 @@ def tweets_to_edgelist(df):
 def get_ccdf(data):
 	"""Returns the CCDF of a set of continuous data."""
 
-    ser = pd.Series(data)
-    ser[len(ser)] = ser.iloc[-1]
-    ser = ser.sort_values()
-    cum_dist = np.linspace(0.,1.,len(ser))
-    ser_cdf = pd.Series(cum_dist, index=ser)
-    ccdf = 1- ser_cdf.reset_index().groupby(by='index').max()
-    return ccdf[0]
+	ser = pd.Series(data)
+	ser[len(ser)] = ser.iloc[-1]
+	ser = ser.sort_values()
+	cum_dist = np.linspace(0.,1.,len(ser))
+	ser_cdf = pd.Series(cum_dist, index=ser)
+	ccdf = 1- ser_cdf.reset_index().groupby(by='index').max()
+	return ccdf[0]
