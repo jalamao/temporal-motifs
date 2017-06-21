@@ -7,8 +7,8 @@ setup(name='motifs',
       classifiers=[
         'Programming Language :: Python :: 3.5',
       ],
-      keywords='funniest joke comedy flying circus',
-      url='tbc',
+      keywords='temporal motifs networks',
+      url='https://github.com/empiricalstateofmind/temporal-motifs/',
       author='Andrew Mellor',
       author_email='mellor91@hotmail.co.uk',
       license='MIT',
@@ -16,7 +16,8 @@ setup(name='motifs',
       install_requires=[
           'networkx',
           'pandas',
-          'numpy'
+          'numpy',
+          'matplotlib',
       ],
       include_package_data=True,
       zip_safe=False)
