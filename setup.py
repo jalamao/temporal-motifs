@@ -1,9 +1,9 @@
 from setuptools import setup
 
-setup(name='motifs',
+setup(name='tmotifs',
       version='0.1',
-      description='Finding temporal motifs in data',
-      long_description='Finding temporal motifs in data',
+      description='Finding temporal components and motifs in temporal networks',
+      long_description='Finding temporal components and motifs in temporal networks',
       classifiers=[
         'Programming Language :: Python :: 3.5',
       ],
