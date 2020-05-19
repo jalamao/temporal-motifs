@@ -1,6 +1,6 @@
 # Temporal Event Graph
 
-A python library for analysing temporal networks.
+A python library for analysing temporal networks (graphs).
 
 #### Features:
 
