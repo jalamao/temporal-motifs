@@ -2,7 +2,7 @@ cycler==0.10.0
 decorator==4.0.11
 matplotlib==2.0.2
 networkx==1.11
-numpy==1.13.0
+numpy==1.21.0
 pandas==0.20.2
 pyparsing==2.2.0
 python-dateutil==2.6.0
